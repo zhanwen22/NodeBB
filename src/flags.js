@@ -757,9 +757,9 @@ Flags.update = async function (flagId, uid, changeset) {
 			if (current[prop] === changeset[prop]) {
 				delete changeset[prop];
 			} else if (prop === 'state') {
-				stateChange(changeset, prop, flagId, now);
+				stateChange(changeset, prop, current, flagId, now);
 			} else if (prop === 'assignee') {
-				tasks.push(assigneeChange(changeset, prop, current, flagId, now));
+				tasks.push(assigneeChange(changeset, prop, flagId, now));
 			}
 		}
 
