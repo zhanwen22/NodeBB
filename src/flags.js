@@ -755,7 +755,8 @@ Flags.update = async function (flagId, uid, changeset) {
 		Object.keys(changeset).forEach((prop) => {
 			if (shouldDelete(changeset, current, prop)) {
 				return;
-			} if (prop === 'state') {
+			}
+			if (prop === 'state') {
 				stateChange(changeset, current, prop, flagID, now, tasks);
 			} else if (prop === 'assignee') {
 				assigneeChange(changeset, prop, flagID, now);
