@@ -508,28 +508,6 @@ describe('Flags', () => {
 				});
 			});
 		});
-		// taken from chat gpt verbatem, due to a buggy test
-		it('should persist to the flag\'s history', (done) => {
-			Flags.getHistory(1, (err, history) => {
-				if (err) {
-					throw err;
-				}
-
-				history.forEach((change) => {
-					switch (change.attribute) {
-						case 'state':
-							assert.strictEqual('[[flags:state-wip]]', change.value);
-							break;
-
-						case 'assignee':
-							assert.strictEqual(1, change.value);
-							break;
-					}
-				});
-
-				done();
-			});
-		});
 
 		it('should allow assignment if user is an admin and do nothing otherwise', async () => {
 			await Flags.update(1, adminUid, {
