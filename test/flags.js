@@ -493,19 +493,25 @@ describe('Flags', () => {
 				});
 			});
 		});
-		it('should return early if no changeset keys are present', (done) => {
-			Flags.update(1, adminUid, {}, (err) => { // Pass an empty changeset
-				assert.ifError(err);
-				// Retrieve the flag to ensure no changes were made
-				db.getObjectFields('flag:1', ['state', 'assignee'], (err, data) => {
-					if (err) {
-						throw err;
+		it('should persist to the flag\'s history', (done) => {
+			Flags.getHistory(1, (err, history) => {
+				if (err) {
+					throw err;
+				}
+
+				history.forEach((change) => {
+					switch (change.attribute) {
+						case 'state':
+							assert.strictEqual('[[flags:state-wip]]', change.value);
+							break;
+
+						case 'assignee':
+							assert.strictEqual(1, change.value);
+							break;
 					}
-					// Verify that the state and assignee remain unchanged
-					assert.strictEqual('wip', data.state); // Assuming 'wip' was the last state before the test
-					assert.strictEqual(adminUid, parseInt(data.assignee, 10));
-					done();
 				});
+
+				done();
 			});
 		});
 
