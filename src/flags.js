@@ -759,6 +759,7 @@ Flags.update = async function (flagId, uid, changeset) {
 			}
 		});
 	}
+
 	function shouldDelete(changeset, current, prop) {
 		if (current[prop] === changeset[prop]) {
 			delete changeset[prop];
@@ -766,6 +767,7 @@ Flags.update = async function (flagId, uid, changeset) {
 		}
 		return false;
 	}
+
 	async function stateChange(changeset, current, prop, flagId, now, tasks) {
 		if (!Flags._states.has(changeset[prop])) {
 			delete changeset[prop];
@@ -782,6 +784,7 @@ Flags.update = async function (flagId, uid, changeset) {
 			tasks.push(rescindNotifications(`flag:${current.type}:${current.targetId}`));
 		}
 	}
+
 	async function assigneeChange(changeset, prop, flagId, now, tasks) {
 		if (changeset[prop] === '') {
 			tasks.push(db.sortedSetRemove(`flags:byAssignee:${changeset[prop]}`, flagId));
