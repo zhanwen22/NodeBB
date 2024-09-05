@@ -508,7 +508,7 @@ describe('Flags', () => {
 				});
 			});
 		});
-
+		// taken from chat gpt verbatem, due to a buggy test
 		it('should persist to the flag\'s history', (done) => {
 			Flags.getHistory(1, (err, history) => {
 				if (err) {
