@@ -709,8 +709,8 @@ Flags.update = async function (flagId, uid, changeset) {
 	if (!current.type) {
 		return;
 	}
-	const now = currentTime(changeset);s
-	function currentTime(changeset){
+	const now = currentTime(changeset);
+	function currentTime(changeset) {
 		return changeset.datetime || Date.now();
 	}
 	const notifyAssignee = async function (assigneeId) {
