@@ -750,29 +750,23 @@ Flags.update = async function (flagId, uid, changeset) {
 
 	// Retrieve existing flag data to compare for history-saving/reference purposes
 	const tasks = [];
-	processFlagData(changeset, current, flagId, now, tasks);
-	function processFlagData(changeset, current, flagID, now, tasks) {
-		Object.keys(changeset).forEach((prop) => {
-			if (shouldDelete(changeset, current, prop)) {
-				return;
-			}
-			if (prop === 'state') {
-				stateChange(changeset, current, prop, flagID, now, tasks);
+	await processChanges(changeset, current, flagId, now);
+
+	async function processChanges(changeset, current, flagId, now) {
+		for (const prop of Object.keys(changeset)) {
+			if (current[prop] === changeset[prop]) {
+				delete changeset[prop];
+			} else if (prop === 'state') {
+				stateChange(changeset, prop, flagId, now);
 			} else if (prop === 'assignee') {
-				assigneeChange(changeset, prop, flagID, now);
+				tasks.push(assigneeChange(changeset, prop, current, flagId, now));
 			}
-		});
-	}
-	console.log('WENNA ZHANG');
-	function shouldDelete(changeset, current, prop) {
-		if (current[prop] === changeset[prop]) {
-			delete changeset[prop];
-			return true;
 		}
-		return false;
+
+		await Promise.all(tasks);
 	}
 
-	async function stateChange(changeset, current, prop, flagId, now, tasks) {
+	function stateChange(changeset, current, prop, flagId, now) {
 		if (!Flags._states.has(changeset[prop])) {
 			delete changeset[prop];
 		} else {
@@ -787,10 +781,9 @@ Flags.update = async function (flagId, uid, changeset) {
 		}
 	}
 
-	async function assigneeChange(changeset, prop, flagId, now, tasks) {
+	async function assigneeChange(changeset, prop, flagId, now) {
 		if (changeset[prop] === '') {
 			tasks.push(db.sortedSetRemove(`flags:byAssignee:${changeset[prop]}`, flagId));
-
 		/* eslint-disable-next-line */
 		} else if (!await isAssignable(parseInt(changeset[prop], 10))) {
 			delete changeset[prop];
@@ -799,11 +792,9 @@ Flags.update = async function (flagId, uid, changeset) {
 			tasks.push(notifyAssignee(changeset[prop]));
 		}
 	}
-
 	if (!Object.keys(changeset).length) {
 		return;
 	}
-
 	tasks.push(db.setObject(`flag:${flagId}`, changeset));
 	tasks.push(Flags.appendHistory(flagId, uid, changeset));
 	await Promise.all(tasks);
