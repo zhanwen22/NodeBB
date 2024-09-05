@@ -475,7 +475,6 @@ describe('Flags', () => {
 			});
 		});
 	});
-
 	describe('.update()', () => {
 		it('should alter a flag\'s various attributes and persist them to the database', (done) => {
 			Flags.update(1, adminUid, {
@@ -487,9 +486,23 @@ describe('Flags', () => {
 					if (err) {
 						throw err;
 					}
-
 					assert.strictEqual('wip', data.state);
 					assert.ok(!isNaN(parseInt(data.assignee, 10)));
+					assert.strictEqual(adminUid, parseInt(data.assignee, 10));
+					done();
+				});
+			});
+		});
+		it('should return early if no changeset keys are present', (done) => {
+			Flags.update(1, adminUid, {}, (err) => { // Pass an empty changeset
+				assert.ifError(err);
+				// Retrieve the flag to ensure no changes were made
+				db.getObjectFields('flag:1', ['state', 'assignee'], (err, data) => {
+					if (err) {
+						throw err;
+					}
+					// Verify that the state and assignee remain unchanged
+					assert.strictEqual('wip', data.state); // Assuming 'wip' was the last state before the test
 					assert.strictEqual(adminUid, parseInt(data.assignee, 10));
 					done();
 				});
