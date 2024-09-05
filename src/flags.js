@@ -750,23 +750,24 @@ Flags.update = async function (flagId, uid, changeset) {
 
 	// Retrieve existing flag data to compare for history-saving/reference purposes
 	const tasks = [];
-	await processChanges(changeset, current, flagId, now);
-
-	async function processChanges(changeset, current, flagId, now) {
-		for (const prop of Object.keys(changeset)) {
-			if (current[prop] === changeset[prop]) {
+	for (const prop of Object.keys(changeset)) {
+		if (current[prop] === changeset[prop]) {
+			delete changeset[prop];
+		} else if (prop === 'state') {
+			stateChange(prop);
+		} else if (prop === 'assignee') {
+			if (changeset[prop] === '') {
+				tasks.push(db.sortedSetRemove(`flags:byAssignee:${changeset[prop]}`, flagId));
+			/* eslint-disable-next-line */
+			} else if (!await isAssignable(parseInt(changeset[prop], 10))) {
 				delete changeset[prop];
-			} else if (prop === 'state') {
-				stateChange(changeset, prop, current, flagId, now);
-			} else if (prop === 'assignee') {
-				tasks.push(assigneeChange(changeset, prop, flagId, now));
+			} else {
+				tasks.push(db.sortedSetAdd(`flags:byAssignee:${changeset[prop]}`, now, flagId));
+				tasks.push(notifyAssignee(changeset[prop]));
 			}
 		}
-
-		await Promise.all(tasks);
 	}
-
-	function stateChange(changeset, current, prop, flagId, now) {
+	function stateChange(prop) {
 		if (!Flags._states.has(changeset[prop])) {
 			delete changeset[prop];
 		} else {
@@ -778,18 +779,6 @@ Flags.update = async function (flagId, uid, changeset) {
 			if (changeset[prop] === 'rejected' && meta.config['flags:actionOnReject'] === 'rescind') {
 				tasks.push(rescindNotifications(`flag:${current.type}:${current.targetId}`));
 			}
-		}
-	}
-
-	async function assigneeChange(changeset, prop, flagId, now) {
-		if (changeset[prop] === '') {
-			tasks.push(db.sortedSetRemove(`flags:byAssignee:${changeset[prop]}`, flagId));
-		/* eslint-disable-next-line */
-		} else if (!await isAssignable(parseInt(changeset[prop], 10))) {
-			delete changeset[prop];
-		} else {
-			tasks.push(db.sortedSetAdd(`flags:byAssignee:${changeset[prop]}`, now, flagId));
-			tasks.push(notifyAssignee(changeset[prop]));
 		}
 	}
 	if (!Object.keys(changeset).length) {
